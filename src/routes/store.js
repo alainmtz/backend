@@ -1,8 +1,25 @@
+/**
+ * @swagger
+ * /api/store/products:
+ *   get:
+ *     summary: Lista todos los productos disponibles en inventario
+ *     tags:
+ *       - Store
+ *     responses:
+ *       200:
+ *         description: Lista de productos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Item'
+ */
 const express = require('express');
-const router = express.Router();
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const { Item, Transaction, StockHistory, Supplier, Purchase } = require('../models');
+const router = express.Router();
 
 // Listar items disponibles
 router.get('/products', async (req, res) => {
@@ -142,3 +159,4 @@ router.get('/purchases', async (req, res) => {
 });
 
 module.exports = router;
+// ...existing code...

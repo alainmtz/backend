@@ -1,0 +1,59 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "FulltimeWebApp API",
+    "version": "1.0.0",
+    "description": "Documentación Swagger para la API de FulltimeWebApp"
+  },
+  "servers": [
+    { "url": "http://localhost:4000" }
+  ],
+  "paths": {
+    "/api/items": {
+      "get": {
+        "summary": "Obtener todos los items",
+        "responses": {
+          "200": {
+            "description": "Lista de items",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Item" }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Item": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "sku": { "type": "string" },
+          "description": { "type": "string" },
+          "price": { "type": "number" },
+          "cost": { "type": "number" },
+          "brand": { "type": "string" },
+          "model": { "type": "string" },
+          "status": { "type": "string" },
+          "supplier_id": { "type": "integer" },
+          "supplier_name": { "type": "string" },
+          "provenance": { "type": "string" },
+          "warranty_days": { "type": "integer" },
+          "image_url": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" },
+          "stock_id": { "type": "integer" },
+          "quantity": { "type": "integer" },
+          "stock_status": { "type": "string" }
+        }
+      }
+    }
+  }
+}

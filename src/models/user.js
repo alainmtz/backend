@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
-  return sequelize.define('User', {
+  const User = sequelize.define('User', {
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
@@ -26,7 +26,7 @@ module.exports = (sequelize) => {
       allowNull: false,
     },
     role: {
-      type: DataTypes.ENUM('admin','staff'),
+      type: DataTypes.ENUM('admin','staff','developer','vendedor'),
       defaultValue: 'staff',
     },
     created_at: {
@@ -38,4 +38,15 @@ module.exports = (sequelize) => {
     timestamps: false,
     underscored: true,
   });
+
+  User.associate = models => {
+    User.belongsToMany(models.Role, {
+      through: models.UserRole,
+      as: 'roles',
+      foreignKey: 'user_id',
+      otherKey: 'role_id'
+    });
+  };
+
+  return User;
 };

@@ -1,7 +1,8 @@
 const { Project, ProjectItem, Item, Consumible, ProjectConsumible } = require('../models');
+const { ValidationError, NotFoundError, InternalError } = require('../utils/errors');
 
 // Obtener todos los proyectos (con items y consumibles)
-exports.getAll = async (req, res) => {
+exports.getAll = async (req, res, next) => {
   try {
     const projects = await Project.findAll({
       include: [
@@ -19,16 +20,29 @@ exports.getAll = async (req, res) => {
     });
     res.json(projects);
   } catch (err) {
-    res.status(500).json({ error: 'Error al obtener proyectos' });
+    next(new InternalError('Error al obtener proyectos', err));
   }
 };
 
-// Crear proyecto con items y consumibles
-exports.create = async (req, res) => {
+const { body, validationResult } = require('express-validator');
+
+exports.validateCreate = [
+  body('name').isString().notEmpty().withMessage('El nombre es obligatorio'),
+  body('description').optional().isString(),
+  body('labor_cost').optional().isFloat({ min: 0 }),
+  body('items').optional().isArray(),
+  body('consumibles').optional().isArray(),
+];
+
+exports.create = async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return next(new ValidationError('Datos inválidos para crear proyecto', errors.array()));
+  }
   try {
     const { name, description, items, consumibles } = req.body;
-    const { labor_cost } = req.body; // Extract labor_cost from request body
-    const project = await Project.create({ name, description, labor_cost }); // Include labor_cost in project creation
+    const { labor_cost } = req.body;
+    const project = await Project.create({ name, description, labor_cost });
     // Items
     if (items && Array.isArray(items)) {
       for (const i of items) {
@@ -59,12 +73,12 @@ exports.create = async (req, res) => {
     }
     res.status(201).json(project);
   } catch (err) {
-    res.status(400).json({ error: 'Error al crear proyecto', details: err });
+    next(new ValidationError('Error al crear proyecto', err));
   }
 };
 
 // Obtener proyecto por ID con items, consumibles y costo total
-exports.getById = async (req, res) => {
+exports.getById = async (req, res, next) => {
   try {
     const project = await Project.findByPk(req.params.id, {
       include: [
@@ -80,47 +94,50 @@ exports.getById = async (req, res) => {
         }
       ]
     });
-    if (!project) return res.status(404).json({ error: 'Proyecto no encontrado' });
+    if (!project) throw new NotFoundError('Proyecto no encontrado');
     // Calcular costo total
     const totalItems = project.projectItems.reduce((sum, pi) => sum + (pi.unit_price * pi.quantity), 0);
-      const totalConsumibles = project.projectConsumibles.reduce((sum, pc) => {
-        const consumible = pc.consumible;
-        if (consumible && consumible.usage_count > 0) {
-          return sum + ((consumible.sale_price / consumible.usage_count) * pc.quantity_used);
-        }
-        return sum;
-      }, 0);
+    const totalConsumibles = project.projectConsumibles.reduce((sum, pc) => {
+      const consumible = pc.consumible;
+      if (consumible && consumible.usage_count > 0) {
+        return sum + ((consumible.sale_price / consumible.usage_count) * pc.quantity_used);
+      }
+      return sum;
+    }, 0);
     res.json({
       ...project.toJSON(),
-      total_cost: totalItems + totalConsumibles + (project.labor_cost || 0), // Include labor_cost in total cost
-      labor_cost: project.labor_cost // Return labor_cost in response
+      total_cost: totalItems + totalConsumibles + (project.labor_cost || 0),
+      labor_cost: project.labor_cost
     });
   } catch (err) {
-    res.status(500).json({ error: 'Error al obtener proyecto' });
+    if (err instanceof NotFoundError) return next(err);
+    next(new InternalError('Error al obtener proyecto', err));
   }
 };
 
 // Actualizar proyecto
-exports.update = async (req, res) => {
+exports.update = async (req, res, next) => {
   try {
     const project = await Project.findByPk(req.params.id);
-    if (!project) return res.status(404).json({ error: 'Proyecto no encontrado' });
-  await project.update({ ...req.body, labor_cost: req.body.labor_cost }); // Ensure labor_cost is updated
+    if (!project) throw new NotFoundError('Proyecto no encontrado');
+    await project.update({ ...req.body, labor_cost: req.body.labor_cost });
     res.json(project);
   } catch (err) {
-    res.status(400).json({ error: 'Error al actualizar proyecto', details: err });
+    if (err instanceof NotFoundError) return next(err);
+    next(new ValidationError('Error al actualizar proyecto', err));
   }
 };
 
 // Eliminar proyecto
-exports.remove = async (req, res) => {
+exports.remove = async (req, res, next) => {
   try {
     const project = await Project.findByPk(req.params.id);
-    if (!project) return res.status(404).json({ error: 'Proyecto no encontrado' });
+    if (!project) throw new NotFoundError('Proyecto no encontrado');
     await ProjectItem.destroy({ where: { project_id: project.id } });
     await project.destroy();
     res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ error: 'Error al eliminar proyecto' });
+    if (err instanceof NotFoundError) return next(err);
+    next(new InternalError('Error al eliminar proyecto', err));
   }
 };

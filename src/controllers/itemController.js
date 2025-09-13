@@ -39,17 +39,30 @@ const { Item } = require('../models');
 // Obtener todos los items
 const { Supplier } = require('../models');
 
+
 exports.getAll = async (req, res) => {
   try {
     const Stock = require('../models').Stock;
-    const items = await Item.findAll({
+    // Paginación
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const offset = (page - 1) * limit;
+
+    // Filtro por proveedor
+    const supplierName = req.query.supplier;
+    const whereSupplier = supplierName ? { name: supplierName } : {};
+
+    const items = await Item.findAndCountAll({
       include: [
-        { model: Supplier, as: 'supplier', attributes: ['name'] },
+        { model: Supplier, as: 'supplier', attributes: ['name'], where: whereSupplier },
         { model: Stock, as: 'stock' }
-      ]
+      ],
+      offset,
+      limit
     });
+
     // Mapear para mostrar todos los campos relevantes de Item y Stock
-    const itemsFull = items.map(item => ({
+    const itemsFull = items.rows.map(item => ({
       id: item.id,
       name: item.name,
       sku: item.sku,
@@ -68,14 +81,38 @@ exports.getAll = async (req, res) => {
       created_at: item.created_at,
       updated_at: item.updated_at
     }));
-    res.json(itemsFull);
+    res.json({
+      total: items.count,
+      page,
+      limit,
+      items: itemsFull
+    });
   } catch (err) {
-    res.status(500).json({ error: 'Error al obtener items' });
+    res.status(500).json({ error: 'Error al obtener items', details: err.message });
   }
 };
 
-// Crear item
-exports.create = async (req, res) => {
+const { body, validationResult } = require('express-validator');
+
+exports.validateCreate = [
+  body('name').isString().notEmpty().withMessage('El nombre es obligatorio'),
+  body('sku').isString().notEmpty().withMessage('El SKU es obligatorio'),
+  body('price').isFloat({ min: 0 }).withMessage('El precio debe ser un número positivo'),
+  body('cost').isFloat({ min: 0 }).withMessage('El costo debe ser un número positivo'),
+  body('brand').optional().isString(),
+  body('model').optional().isString(),
+  body('quantity').optional().isInt({ min: 0 }),
+  body('supplier_id').optional().isInt(),
+  body('provenance').optional().isString(),
+  body('warranty_days').optional().isInt({ min: 0 }),
+  body('image_url').optional().isString(),
+];
+
+exports.create = async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return next(new ValidationError('Datos inválidos para crear item', errors.array()));
+  }
   try {
     const item = await Item.create(req.body);
     // Crear registro de Stock asociado
@@ -88,7 +125,7 @@ exports.create = async (req, res) => {
     });
     res.status(201).json({ ...item.toJSON(), stock: stock.toJSON() });
   } catch (err) {
-    res.status(400).json({ error: 'Error al crear item', details: err.message });
+    next(new ValidationError('Error al crear item', err.message));
   }
 };
 
@@ -104,22 +141,24 @@ exports.getById = async (req, res) => {
 };
 
 // Actualizar item
-exports.update = async (req, res) => {
+const { ValidationError, AuthError, NotFoundError, InternalError } = require('../utils/errors');
+
+exports.update = async (req, res, next) => {
   try {
     const item = await Item.findByPk(req.params.id);
-    if (!item) return res.status(404).json({ error: 'Item no encontrado' });
+    if (!item) return next(new NotFoundError('Item no encontrado'));
     await item.update(req.body);
     res.json(item);
   } catch (err) {
-    res.status(400).json({ error: 'Error al actualizar item', details: err });
+    next(new ValidationError('Error al actualizar item', err.message));
   }
 };
 
 // Eliminar item
-exports.remove = async (req, res) => {
+exports.remove = async (req, res, next) => {
   try {
     const item = await Item.findByPk(req.params.id);
-    if (!item) return res.status(404).json({ error: 'Item no encontrado' });
+    if (!item) return next(new NotFoundError('Item no encontrado'));
     const Stock = require('../models').Stock;
     const ProjectItem = require('../models').ProjectItem;
     const Transaction = require('../models').Transaction;
@@ -127,15 +166,15 @@ exports.remove = async (req, res) => {
     const projectItems = await ProjectItem.findOne({ where: { item_id: item.id } });
     const transactions = await Transaction.findOne({ where: { item_id: item.id } });
     if (projectItems) {
-      return res.status(400).json({ error: 'No se puede eliminar el artículo porque está vinculado a uno o más proyectos.' });
+      return next(new ValidationError('No se puede eliminar el artículo porque está vinculado a uno o más proyectos.'));
     }
     if (transactions) {
-      return res.status(400).json({ error: 'No se puede eliminar el artículo porque tiene transacciones asociadas.' });
+      return next(new ValidationError('No se puede eliminar el artículo porque tiene transacciones asociadas.'));
     }
     await Stock.destroy({ where: { item_id: item.id } });
     await item.destroy();
     res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ error: 'Error al eliminar item', details: err.message });
+    next(new InternalError('Error al eliminar item', err.message));
   }
 };

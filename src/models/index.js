@@ -22,6 +22,9 @@ const ProjectConsumible = require('./project_consumible')(sequelize);
 const User = require('./user')(sequelize);
 const Transaction = require('./transaction')(sequelize);
 const Purchase = require('./purchase')(sequelize);
+const Role = require('./role')(sequelize);
+const UserRole = require('./user_role')(sequelize);
+const Finance = require('./finance')(sequelize);
 
 // Relación: Un proyecto tiene muchos items a través de ProjectItem
 Project.belongsToMany(Item, { through: ProjectItem, foreignKey: 'project_id', otherKey: 'item_id', as: 'items' });
@@ -44,6 +47,17 @@ ProjectConsumible.belongsTo(Project, { foreignKey: 'project_id', as: 'project' }
 Transaction.belongsTo(Item, { foreignKey: 'item_id', as: 'item' });
 Transaction.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 
+// Asociaciones
+User.associate({ Role, UserRole });
+Role.associate = models => {
+  Role.belongsToMany(models.User, {
+    through: models.UserRole,
+    as: 'users',
+    foreignKey: 'role_id',
+    otherKey: 'user_id'
+  });
+};
+
 module.exports = {
 	sequelize,
 	Item,
@@ -56,5 +70,8 @@ module.exports = {
 	User,
 	Transaction,
 	Purchase,
+	Role,
+	UserRole,
+	Finance,
 	// otros modelos
 };

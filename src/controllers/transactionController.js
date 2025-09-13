@@ -1,7 +1,8 @@
+
+const { ValidationError, AuthError, NotFoundError, InternalError } = require('../utils/errors');
 const { Transaction, Item, User } = require('../models');
 
-// Obtener todas las transacciones
-exports.getAll = async (req, res) => {
+exports.getAll = async (req, res, next) => {
   try {
     const transactions = await Transaction.findAll({
       include: [
@@ -11,12 +12,26 @@ exports.getAll = async (req, res) => {
     });
     res.json(transactions);
   } catch (err) {
-    res.status(500).json({ error: 'Error al obtener transacciones', details: err });
+    next(new InternalError('Error al obtener transacciones', err.message));
   }
 };
 
-// Crear una transacción
-exports.create = async (req, res) => {
+const { body, validationResult } = require('express-validator');
+
+exports.validateCreate = [
+  body('item_id').isInt().withMessage('item_id debe ser un entero'),
+  body('user_id').isInt().withMessage('user_id debe ser un entero'),
+  body('type').isString().notEmpty().withMessage('El tipo es obligatorio'),
+  body('quantity').isInt({ min: 1 }).withMessage('La cantidad debe ser un entero positivo'),
+  body('price').isFloat({ min: 0 }).withMessage('El precio debe ser un número positivo'),
+  body('notes').optional().isString(),
+];
+
+exports.create = async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return next(new ValidationError('Datos inválidos para crear transacción', errors.array()));
+  }
   try {
     const { item_id, user_id, type, quantity, price, notes } = req.body;
     const transaction = await Transaction.create({
@@ -29,12 +44,11 @@ exports.create = async (req, res) => {
     });
     res.status(201).json(transaction);
   } catch (err) {
-    res.status(400).json({ error: 'Error al crear transacción', details: err });
+    next(new ValidationError('Error al crear transacción', err.message));
   }
 };
 
-// Obtener una transacción por ID
-exports.getById = async (req, res) => {
+exports.getById = async (req, res, next) => {
   try {
     const transaction = await Transaction.findByPk(req.params.id, {
       include: [
@@ -42,33 +56,31 @@ exports.getById = async (req, res) => {
         { model: User, as: 'user' }
       ]
     });
-    if (!transaction) return res.status(404).json({ error: 'Transacción no encontrada' });
+    if (!transaction) return next(new NotFoundError('Transacción no encontrada'));
     res.json(transaction);
   } catch (err) {
-    res.status(500).json({ error: 'Error al obtener transacción', details: err });
+    next(new InternalError('Error al obtener transacción', err.message));
   }
 };
 
-// Actualizar una transacción
-exports.update = async (req, res) => {
+exports.update = async (req, res, next) => {
   try {
     const transaction = await Transaction.findByPk(req.params.id);
-    if (!transaction) return res.status(404).json({ error: 'Transacción no encontrada' });
+    if (!transaction) return next(new NotFoundError('Transacción no encontrada'));
     await transaction.update(req.body);
     res.json(transaction);
   } catch (err) {
-    res.status(400).json({ error: 'Error al actualizar transacción', details: err });
+    next(new ValidationError('Error al actualizar transacción', err.message));
   }
 };
 
-// Eliminar una transacción
-exports.remove = async (req, res) => {
+exports.remove = async (req, res, next) => {
   try {
     const transaction = await Transaction.findByPk(req.params.id);
-    if (!transaction) return res.status(404).json({ error: 'Transacción no encontrada' });
+    if (!transaction) return next(new NotFoundError('Transacción no encontrada'));
     await transaction.destroy();
     res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ error: 'Error al eliminar transacción', details: err });
+    next(new InternalError('Error al eliminar transacción', err.message));
   }
 };

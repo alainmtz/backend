@@ -1,53 +1,70 @@
 const { Consumible } = require('../models');
+const { ValidationError, NotFoundError, InternalError } = require('../utils/errors');
 
-exports.getAll = async (req, res) => {
+exports.getAll = async (req, res, next) => {
   try {
     const consumibles = await Consumible.findAll();
     res.json(consumibles);
   } catch (err) {
-    res.status(500).json({ error: 'Error al obtener consumibles' });
+    next(new InternalError('Error al obtener consumibles', err));
   }
 };
 
-exports.create = async (req, res) => {
+const { body, validationResult } = require('express-validator');
+
+exports.validateCreate = [
+  body('name').isString().notEmpty().withMessage('El nombre es obligatorio'),
+  body('usage_count').isInt({ min: 0 }).withMessage('El uso debe ser un número entero positivo'),
+  body('cost_price').isFloat({ min: 0 }).withMessage('El costo debe ser un número positivo'),
+  body('sale_price').isFloat({ min: 0 }).withMessage('El precio de venta debe ser un número positivo'),
+];
+
+exports.create = async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return next(new ValidationError('Datos inválidos para crear consumible', errors.array()));
+  }
   try {
     const { name, usage_count, cost_price, sale_price } = req.body;
     const consumible = await Consumible.create({ name, usage_count, cost_price, sale_price });
     res.status(201).json(consumible);
   } catch (err) {
-    res.status(400).json({ error: 'Error al crear consumible', details: err });
+    next(new ValidationError('Error al crear consumible', err));
   }
 };
 
-exports.getById = async (req, res) => {
+exports.getById = async (req, res, next) => {
   try {
     const consumible = await Consumible.findByPk(req.params.id);
-    if (!consumible) return res.status(404).json({ error: 'Consumible no encontrado' });
+    if (!consumible) throw new NotFoundError('Consumible no encontrado');
     res.json(consumible);
   } catch (err) {
-    res.status(500).json({ error: 'Error al obtener consumible' });
+    if (err instanceof NotFoundError) return next(err);
+    next(new InternalError('Error al obtener consumible', err));
   }
 };
 
-exports.update = async (req, res) => {
+exports.update = async (req, res, next) => {
   try {
     const { name, usage_count, cost_price, sale_price } = req.body;
     const consumible = await Consumible.findByPk(req.params.id);
-    if (!consumible) return res.status(404).json({ error: 'Consumible no encontrado' });
+    if (!consumible) throw new NotFoundError('Consumible no encontrado');
     await consumible.update({ name, usage_count, cost_price, sale_price });
     res.json(consumible);
   } catch (err) {
-    res.status(400).json({ error: 'Error al actualizar consumible', details: err });
+    if (err instanceof NotFoundError) return next(err);
+    next(new ValidationError('Error al actualizar consumible', err));
   }
 };
 
-exports.remove = async (req, res) => {
+exports.remove = async (req, res, next) => {
   try {
     const consumible = await Consumible.findByPk(req.params.id);
-    if (!consumible) return res.status(404).json({ error: 'Consumible no encontrado' });
+    if (!consumible) throw new NotFoundError('Consumible no encontrado');
     await consumible.destroy();
     res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ error: 'Error al eliminar consumible' });
+    if (err instanceof NotFoundError) return next(err);
+    next(new InternalError('Error al eliminar consumible', err));
   }
 };

@@ -1,72 +1,131 @@
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Item:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *         name:
+ *           type: string
+ *         sku:
+ *           type: string
+ *         description:
+ *           type: string
+ *         price:
+ *           type: number
+ *           format: float
+ *         cost:
+ *           type: number
+ *           format: float
+ *         brand:
+ *           type: string
+ *         model:
+ *           type: string
+ *         status:
+ *           type: string
+ *           enum: [in-stock, low-stock, out-of-stock, discontinued]
+ *         supplier_id:
+ *           type: integer
+ *         provenance:
+ *           type: string
+ *         warranty_days:
+ *           type: integer
+ *         image_url:
+ *           type: string
+ *         created_at:
+ *           type: string
+ *           format: date-time
+ *         updated_at:
+ *           type: string
+ *           format: date-time
+ */
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
-  return sequelize.define('Item', {
+  const Item = sequelize.define('Item', {
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
     name: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.STRING,
       allowNull: false,
+      validate: { notEmpty: true }
     },
     sku: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
+      validate: { notEmpty: true }
     },
     description: {
       type: DataTypes.TEXT,
-      allowNull: true,
+      allowNull: true
     },
     price: {
       type: DataTypes.DECIMAL(10,2),
       allowNull: false,
+      validate: { min: 0 }
     },
     cost: {
       type: DataTypes.DECIMAL(10,2),
-      allowNull: true,
+      allowNull: false,
+      validate: { min: 0 }
     },
     brand: {
-      type: DataTypes.STRING(100),
-      allowNull: true,
+      type: DataTypes.STRING,
+      allowNull: true
     },
     model: {
-      type: DataTypes.STRING(100),
-      allowNull: true,
+      type: DataTypes.STRING,
+      allowNull: true
     },
     status: {
       type: DataTypes.ENUM('in-stock','low-stock','out-of-stock','discontinued'),
-      defaultValue: 'in-stock',
+      allowNull: false,
+      defaultValue: 'in-stock'
     },
     supplier_id: {
       type: DataTypes.INTEGER,
-      allowNull: true,
+      allowNull: true
     },
     provenance: {
-      type: DataTypes.STRING(255),
-      allowNull: true,
+      type: DataTypes.STRING,
+      allowNull: true
     },
     warranty_days: {
       type: DataTypes.INTEGER,
-      defaultValue: 0,
+      allowNull: true,
+      validate: { min: 0 }
     },
     image_url: {
-      type: DataTypes.STRING(255),
-      allowNull: true,
+      type: DataTypes.STRING,
+      allowNull: true
     },
-    created_at: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
-    updated_at: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
+    created_at: DataTypes.DATE,
+    updated_at: DataTypes.DATE
   }, {
     tableName: 'Items',
-    timestamps: false,
     underscored: true,
+    timestamps: true,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at'
   });
+
+  Item.associate = models => {
+    // Relación con Supplier
+    Item.belongsTo(models.Supplier, {
+      as: 'supplier',
+      foreignKey: 'supplier_id'
+    });
+    // Relación con Stock
+    Item.hasOne(models.Stock, {
+      as: 'stock',
+      foreignKey: 'item_id'
+    });
+  };
+
+  return Item;
 };

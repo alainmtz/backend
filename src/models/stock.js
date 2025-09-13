@@ -1,32 +1,23 @@
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
-  return sequelize.define('Stock', {
-    id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
-      primaryKey: true,
-    },
-    item_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      unique: true,
-    },
-    quantity: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
-    },
-    status: {
-      type: DataTypes.ENUM('in-stock','low-stock','out-of-stock','discontinued'),
-      defaultValue: 'in-stock',
-    },
-    updated_at: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
+  const Stock = sequelize.define('Stock', {
+    item_id: DataTypes.INTEGER,
+    quantity: DataTypes.INTEGER,
+    status: DataTypes.ENUM('in-stock','low-stock','out-of-stock','discontinued'),
+    updated_at: DataTypes.DATE
   }, {
     tableName: 'Stock',
-    timestamps: false,
     underscored: true,
+    timestamps: false
   });
+
+  Stock.associate = models => {
+    Stock.belongsTo(models.Item, {
+      as: 'item',
+      foreignKey: 'item_id'
+    });
+  };
+
+  return Stock;
 };
