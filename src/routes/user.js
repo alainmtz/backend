@@ -13,15 +13,45 @@ const { authenticateToken, authorizeRole } = require('../middlewares/auth');
  *       - Usuarios
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Página de resultados
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: Cantidad de resultados por página
+ *       - in: query
+ *         name: email
+ *         schema:
+ *           type: string
+ *         description: Filtrar por email
+ *       - in: query
+ *         name: role
+ *         schema:
+ *           type: string
+ *         description: Filtrar por rol
  *     responses:
  *       200:
- *         description: Lista de usuarios
+ *         description: Lista de usuarios paginada y filtrada
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/User'
+ *               type: object
+ *               properties:
+ *                 total:
+ *                   type: integer
+ *                 page:
+ *                   type: integer
+ *                 limit:
+ *                   type: integer
+ *                 users:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/User'
  */
 router.get('/', authenticateToken, authorizeRole('admin'), userController.getAll);
 

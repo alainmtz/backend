@@ -33,8 +33,18 @@ module.exports = {
   // Obtener todos los usuarios
   async getAll(req, res) {
     try {
-      const users = await User.findAll({ attributes: { exclude: ['password_hash'] } });
-      res.json(users);
+      const { page = 1, limit = 10, email, role } = req.query;
+      const where = {};
+      if (email) where.email = email;
+      if (role) where.role = role;
+      const offset = (parseInt(page) - 1) * parseInt(limit);
+      const { rows, count } = await User.findAndCountAll({
+        where,
+        attributes: { exclude: ['password_hash'] },
+        offset,
+        limit: parseInt(limit)
+      });
+      res.json({ total: count, page: parseInt(page), limit: parseInt(limit), users: rows });
     } catch (err) {
       res.status(500).json({ error: 'Error al obtener usuarios', details: err.message });
     }

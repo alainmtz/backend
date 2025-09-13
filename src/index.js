@@ -7,6 +7,10 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+
+// Automatización de reportes financieros
+require('./services/reportScheduler');
+
 // Documentación Swagger
 require('../swaggerold1')(app);
 
@@ -31,28 +35,27 @@ app.get('/', (req, res) => {
   res.send('🚀 Backend funcionando');
 });
 
-// Rutas de usuarios
-app.use('/api/users', require('./routes/user'));
-// Rutas de items
-app.use('/api/items', require('./routes/item'));
-// Rutas de proveedores
-app.use('/api/suppliers', require('./routes/supplier'));
-// Rutas de proyectos
-app.use('/api/projects', require('./routes/project'));
-// Rutas de consumibles
-app.use('/api/consumibles', require('./routes/consumible'));
-// Rutas de transacciones
-app.use('/api/transactions', require('./routes/transaction'));
 
-// Rutas de stock
-app.use('/api/stock', require('./routes/stock'));
-// Rutas de tienda virtual
-app.use('/api/store', require('./routes/store'));
-// Rutas de autenticación
+const permissions = require('./middlewares/permissions');
+
+// Rutas protegidas con permisos granulares
+app.use('/api/users', permissions, require('./routes/user'));
+app.use('/api/items', permissions, require('./routes/item'));
+app.use('/api/suppliers', permissions, require('./routes/supplier'));
+app.use('/api/projects', permissions, require('./routes/project'));
+app.use('/api/consumibles', permissions, require('./routes/consumible'));
+app.use('/api/transactions', permissions, require('./routes/transaction'));
+app.use('/api/stock', permissions, require('./routes/stock'));
+app.use('/api/store', permissions, require('./routes/store'));
+app.use('/api/finances', permissions, require('./routes/finance'));
+app.use('/api/notifications', permissions, require('./routes/notification'));
+app.use('/api/reports', permissions, require('./routes/report'));
+
+// Rutas de autenticación (sin permisos)
 const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
-// Rutas del sistema financiero
-app.use('/api/finances', require('./routes/finance'));
+// Rutas de recuperación de contraseña
+app.use('/api/password', require('./routes/password'));
 
 
 

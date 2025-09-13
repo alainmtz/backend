@@ -124,8 +124,10 @@
 const express = require('express');
 const router = express.Router();
 const supplierController = require('../controllers/supplierController');
+
 const validateSupplier = require('../middlewares/validateSupplier');
 const { validationResult } = require('express-validator');
+const { authenticateToken, authorizeRole } = require('../middlewares/auth');
 
 function handleValidation(req, res, next) {
 	const errors = validationResult(req);
@@ -135,8 +137,7 @@ function handleValidation(req, res, next) {
 	next();
 }
 
-router.get('/', supplierController.getAll);
-const { authenticateToken, authorizeRole } = require('../middlewares/auth');
+router.get('/', authenticateToken, supplierController.getAll);
 
 router.post('/', authenticateToken, validateSupplier, handleValidation, supplierController.create);
 router.get('/:id', supplierController.getById);

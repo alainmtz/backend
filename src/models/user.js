@@ -29,6 +29,10 @@ module.exports = (sequelize) => {
       type: DataTypes.ENUM('admin','staff','developer','vendedor'),
       defaultValue: 'staff',
     },
+    phone: {
+      type: DataTypes.STRING(20),
+      allowNull: true,
+    },
     created_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,

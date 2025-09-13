@@ -18,39 +18,46 @@
  *           type: number
  *           format: float
  */
-const { DataTypes } = require('sequelize');
+// Eliminado import innecesario
 
-module.exports = (sequelize) => {
-  const Project = sequelize.define('Project', {
-    id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
-      primaryKey: true,
-    },
-    name: {
-      type: DataTypes.STRING(255),
-      allowNull: false,
-      validate: { notEmpty: true }
-    },
-    description: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-    created_at: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    }
-     ,
-      labor_cost: {
-        type: DataTypes.DECIMAL(10,2),
-        allowNull: false,
-        defaultValue: 0.00,
-        validate: { min: 0 }
-      }
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Project:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *         name:
+ *           type: string
+ *         description:
+ *           type: string
+ *         start_date:
+ *           type: string
+ *           format: date
+ *         end_date:
+ *           type: string
+ *           format: date
+ *         status:
+ *           type: string
+ *         created_at:
+ *           type: string
+ *           format: date-time
+ */
+
+module.exports = (sequelize, DataTypes) => {
+  return sequelize.define('Project', {
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    name: { type: DataTypes.STRING, allowNull: false },
+    description: { type: DataTypes.TEXT, allowNull: true },
+    start_date: { type: DataTypes.DATE, allowNull: true },
+    end_date: { type: DataTypes.DATE, allowNull: true },
+    status: { type: DataTypes.STRING, allowNull: false },
+    created_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
   }, {
-    tableName: 'Projects',
+    tableName: 'projects',
     timestamps: false,
-    underscored: true,
   });
-  return Project;
 };
+// ...existing code...

@@ -2,34 +2,34 @@
  * @swagger
  * components:
  *   schemas:
- *     Ticket:
+ *     Report:
  *       type: object
  *       properties:
  *         id:
  *           type: integer
- *         user_id:
- *           type: integer
- *         service_id:
- *           type: integer
- *         status:
+ *         type:
  *           type: string
- *         description:
+ *           description: Tipo de reporte (financiero, inventario, etc)
+ *         period:
  *           type: string
+ *           description: Periodo del reporte (ej: 2025-09)
+ *         data:
+ *           type: object
+ *           description: Datos agregados del reporte
  *         created_at:
  *           type: string
  *           format: date-time
  */
 
 module.exports = (sequelize, DataTypes) => {
-  return sequelize.define('Ticket', {
+  return sequelize.define('Report', {
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-    user_id: { type: DataTypes.INTEGER, allowNull: false },
-    service_id: { type: DataTypes.INTEGER, allowNull: false },
-    status: { type: DataTypes.STRING, allowNull: false },
-    description: { type: DataTypes.TEXT, allowNull: true },
+    type: { type: DataTypes.STRING, allowNull: false },
+    period: { type: DataTypes.STRING, allowNull: false },
+    data: { type: DataTypes.JSON, allowNull: false },
     created_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
   }, {
-    tableName: 'tickets',
+    tableName: 'reports',
     timestamps: false,
   });
 };

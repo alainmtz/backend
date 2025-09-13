@@ -22,7 +22,8 @@ const { Item, Transaction, StockHistory, Supplier, Purchase } = require('../mode
 const router = express.Router();
 
 // Listar items disponibles
-router.get('/products', async (req, res) => {
+const { authenticateToken } = require('../middlewares/auth');
+router.get('/products', authenticateToken, async (req, res) => {
   try {
     const items = await Item.findAll({
       include: [{ model: require('../models').Stock, as: 'stock' }]

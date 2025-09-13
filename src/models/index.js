@@ -15,7 +15,7 @@ const sequelize = new Sequelize(
 const Item = require('./item')(sequelize);
 const Stock = require('./stock')(sequelize);
 const Supplier = require('./supplier')(sequelize);
-const Project = require('./project')(sequelize);
+// const Project = require('./project')(sequelize); // Eliminado duplicado
 const ProjectItem = require('./project_item')(sequelize);
 const Consumible = require('./consumible')(sequelize);
 const ProjectConsumible = require('./project_consumible')(sequelize);
@@ -25,6 +25,13 @@ const Purchase = require('./purchase')(sequelize);
 const Role = require('./role')(sequelize);
 const UserRole = require('./user_role')(sequelize);
 const Finance = require('./finance')(sequelize);
+const FinanceHistory = require('./finance_history')(sequelize);
+const Service = require('./service')(sequelize, Sequelize.DataTypes);
+const Ticket = require('./ticket')(sequelize, Sequelize.DataTypes);
+const Appointment = require('./appointment')(sequelize, Sequelize.DataTypes);
+const Project = require('./project')(sequelize, Sequelize.DataTypes);
+const StockHistory = require('./stock_history')(sequelize);
+const ActivityLog = require('./activity_log')(sequelize, Sequelize.DataTypes);
 
 // Relación: Un proyecto tiene muchos items a través de ProjectItem
 Project.belongsToMany(Item, { through: ProjectItem, foreignKey: 'project_id', otherKey: 'item_id', as: 'items' });
@@ -73,5 +80,10 @@ module.exports = {
 	Role,
 	UserRole,
 	Finance,
-	// otros modelos
+	FinanceHistory,
+	Service,
+	Ticket,
+	Appointment,
+	StockHistory,
+	ActivityLog,
 };

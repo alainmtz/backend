@@ -1,5 +1,47 @@
 /**
  * @swagger
+ * /api/finances/{id}/history:
+ *   get:
+ *     summary: Consulta el historial de auditoría de un registro financiero
+ *     tags:
+ *       - Finanzas
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del registro financiero
+ *     responses:
+ *       200:
+ *         description: Historial de auditoría
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                   finance_id:
+ *                     type: integer
+ *                   action:
+ *                     type: string
+ *                   user_id:
+ *                     type: integer
+ *                   changes:
+ *                     type: object
+ *                   reason:
+ *                     type: string
+ *                   created_at:
+ *                     type: string
+ *                     format: date-time
+ */
+/**
+ * @swagger
  * /api/finances:
  *   get:
  *     summary: Consulta registros financieros
@@ -33,15 +75,34 @@
  *           type: string
  *           format: date
  *         description: Fecha final
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Página de resultados (paginación)
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *         description: Cantidad de resultados por página
  *     responses:
  *       200:
- *         description: Lista de registros financieros
+ *         description: Lista de registros financieros paginados
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Finance'
+ *               type: object
+ *               properties:
+ *                 total:
+ *                   type: integer
+ *                 page:
+ *                   type: integer
+ *                 pageSize:
+ *                   type: integer
+ *                 finances:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Finance'
  */
 /**
  * @swagger
@@ -156,8 +217,8 @@
  *         name: group_by
  *         schema:
  *           type: string
- *           enum: [user, role, type]
- *         description: Agrupar resultados por usuario, rol o tipo
+ *           enum: [user, role, type, week, month, year]
+ *         description: Agrupar resultados por usuario, rol, tipo, semana, mes o año
  *     responses:
  *       200:
  *         description: Reporte agregado
@@ -176,14 +237,26 @@
  *                     type: integer
  *                   type:
  *                     type: string
+ *                   week:
+ *                     type: integer
+ *                   month:
+ *                     type: integer
+ *                   year:
+ *                     type: integer
  */
+
+// --- Código JS separado ---
+
 const express = require('express');
 const router = express.Router();
-const financeController = require('../controllers/financeController');
 const { authenticateToken, authorizeRole } = require('../middlewares/auth');
+
+const financeController = require('../controllers/financeController');
+const { FinanceHistory } = require('../models');
 const { validateCreate } = require('../controllers/financeController');
 const { validationResult } = require('express-validator');
 
+// Middleware para manejar errores de validación
 function handleValidation(req, res, next) {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -191,6 +264,19 @@ function handleValidation(req, res, next) {
   }
   next();
 }
+
+// Consultar historial de auditoría de un registro financiero
+router.get('/:id/history', authenticateToken, async (req, res, next) => {
+  try {
+    const history = await FinanceHistory.findAll({
+      where: { finance_id: req.params.id },
+      order: [['created_at', 'DESC']]
+    });
+    res.json(history);
+  } catch (err) {
+    next(err);
+  }
+});
 
 // Consultar registros financieros (filtros por usuario, rol, tipo, fechas)
 router.get('/', authenticateToken, financeController.getAll);
@@ -201,6 +287,6 @@ router.get('/:id', authenticateToken, financeController.getById);
 // Eliminar registro financiero
 router.delete('/:id', authenticateToken, authorizeRole('admin', 'finanzas'), financeController.remove);
 // Reportes agregados
-router.get('/report', authenticateToken, require('../controllers/financeController').getReport);
+router.get('/report', authenticateToken, financeController.getReport);
 
 module.exports = router;
