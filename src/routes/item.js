@@ -7,7 +7,8 @@ const multer = require('multer');
 // Configuración de multer para guardar imágenes en /uploads
 const storage = multer.diskStorage({
 	destination: function (req, file, cb) {
-		cb(null, path.join(__dirname, '../../uploads'));
+		// Guardar en /frontend/public/uploads
+		cb(null, path.join(__dirname, '../../../frontend/public/uploads'));
 	},
 	filename: function (req, file, cb) {
 		const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
