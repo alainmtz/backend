@@ -1,6 +1,6 @@
 const { DataTypes } = require('sequelize');
 
-module.exports = (sequelize) => {
+module.exports = (sequelize, DataTypes) => {
   const User = sequelize.define('User', {
     id: {
       type: DataTypes.INTEGER,
@@ -50,6 +50,7 @@ module.exports = (sequelize) => {
       foreignKey: 'user_id',
       otherKey: 'role_id'
     });
+    User.hasMany(models.UserRole, { foreignKey: 'user_id', as: 'userRoles' });
   };
 
   return User;

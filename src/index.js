@@ -16,7 +16,10 @@ require('../swaggerold1')(app);
 
 
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: '*',
+  credentials: true
+}));
 app.use(morgan('dev'));
 // Permitir imágenes desde localhost:4000 y data: en CSP
 app.use((req, res, next) => {
@@ -38,18 +41,23 @@ app.get('/', (req, res) => {
 
 const permissions = require('./middlewares/permissions');
 
-// Rutas protegidas con permisos granulares
-app.use('/api/users', permissions, require('./routes/user'));
-app.use('/api/items', permissions, require('./routes/item'));
-app.use('/api/suppliers', permissions, require('./routes/supplier'));
-app.use('/api/projects', permissions, require('./routes/project'));
-app.use('/api/consumibles', permissions, require('./routes/consumible'));
-app.use('/api/transactions', permissions, require('./routes/transaction'));
-app.use('/api/stock', permissions, require('./routes/stock'));
-app.use('/api/store', permissions, require('./routes/store'));
-app.use('/api/finances', permissions, require('./routes/finance'));
-app.use('/api/notifications', permissions, require('./routes/notification'));
-app.use('/api/reports', permissions, require('./routes/report'));
+
+const { authenticateToken } = require('./middlewares/auth');
+// Rutas protegidas: primero autenticación, luego permisos
+app.use('/api/users', authenticateToken, permissions, require('./routes/user'));
+app.use('/api/items', authenticateToken, permissions, require('./routes/item'));
+app.use('/api/suppliers', authenticateToken, permissions, require('./routes/supplier'));
+app.use('/api/projects', authenticateToken, permissions, require('./routes/project'));
+app.use('/api/consumibles', authenticateToken, permissions, require('./routes/consumible'));
+app.use('/api/transactions', authenticateToken, permissions, require('./routes/transaction'));
+app.use('/api/stock', authenticateToken, permissions, require('./routes/stock'));
+app.use('/api/store', authenticateToken, permissions, require('./routes/store'));
+app.use('/api/finances', authenticateToken, permissions, require('./routes/finance'));
+app.use('/api/notifications', authenticateToken, permissions, require('./routes/notification'));
+app.use('/api/reports', authenticateToken, permissions, require('./routes/report'));
+
+// Rutas principales (dashboard, refresh, etc)
+app.use('/api', require('./routes'));
 
 // Rutas de autenticación (sin permisos)
 const authRoutes = require('./routes/auth');
@@ -74,6 +82,6 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`✅ Backend escuchando en http://localhost:${PORT}`);
+app.listen(PORT, '192.168.9.116', () => {
+  console.log(`✅ Backend escuchando en http://192.168.9.116:${PORT}`);
 });

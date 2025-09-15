@@ -1667,5 +1667,134 @@
         }
       }
     }
+  },
+  "components": {
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "first_name": { "type": "string" },
+          "last_name": { "type": "string" },
+          "email": { "type": "string" },
+          "role": { "type": "string" },
+          "phone": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Item": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "sku": { "type": "string" },
+          "description": { "type": "string" },
+          "price": { "type": "number", "format": "float" },
+          "cost": { "type": "number", "format": "float" },
+          "brand": { "type": "string" },
+          "model": { "type": "string" },
+          "status": { "type": "string" },
+          "supplier_id": { "type": "integer" },
+          "provenance": { "type": "string" },
+          "warranty_days": { "type": "integer" },
+          "image_url": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Role": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      },
+      "UserRole": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "user_id": { "type": "integer" },
+          "role_id": { "type": "integer" }
+        }
+      },
+      "Supplier": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "contact": { "type": "string" },
+          "phone": { "type": "string" },
+          "email": { "type": "string" }
+        }
+      },
+      "Project": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "start_date": { "type": "string", "format": "date" },
+          "end_date": { "type": "string", "format": "date" },
+          "status": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "labor_cost": { "type": "number", "format": "float" }
+        }
+      },
+      "Consumible": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "usage_count": { "type": "integer" },
+          "cost_price": { "type": "number", "format": "float" },
+          "sale_price": { "type": "number", "format": "float" }
+        }
+      },
+      "Transaction": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "item_id": { "type": "integer" },
+          "user_id": { "type": "integer" },
+          "type": { "type": "string" },
+          "quantity": { "type": "integer" },
+          "price": { "type": "number", "format": "float" },
+          "notes": { "type": "string" },
+          "transaction_date": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Purchase": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "supplier_id": { "type": "integer" },
+          "user_id": { "type": "integer" },
+          "items": { "type": "array", "items": { "type": "integer" } },
+          "metodo_compra": { "type": "string" },
+          "costo_envio": { "type": "number", "format": "float" },
+          "notas": { "type": "string" },
+          "fecha_compra": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Stock": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "item_id": { "type": "integer" },
+          "quantity": { "type": "integer" }
+        }
+      },
+      "Report": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "type": { "type": "string" },
+          "period": { "type": "string" },
+          "data": { "type": "object" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      }
+    }
   }
 }

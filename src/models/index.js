@@ -1,4 +1,5 @@
-const { Sequelize } = require('sequelize');
+
+const { Sequelize, DataTypes } = require('sequelize');
 const config = require('../config/config');
 
 const sequelize = new Sequelize(
@@ -12,78 +13,35 @@ const sequelize = new Sequelize(
 	}
 );
 
-const Item = require('./item')(sequelize);
-const Stock = require('./stock')(sequelize);
-const Supplier = require('./supplier')(sequelize);
-// const Project = require('./project')(sequelize); // Eliminado duplicado
-const ProjectItem = require('./project_item')(sequelize);
-const Consumible = require('./consumible')(sequelize);
-const ProjectConsumible = require('./project_consumible')(sequelize);
-const User = require('./user')(sequelize);
-const Transaction = require('./transaction')(sequelize);
-const Purchase = require('./purchase')(sequelize);
-const Role = require('./role')(sequelize);
-const UserRole = require('./user_role')(sequelize);
-const Finance = require('./finance')(sequelize);
-const FinanceHistory = require('./finance_history')(sequelize);
-const Service = require('./service')(sequelize, Sequelize.DataTypes);
-const Ticket = require('./ticket')(sequelize, Sequelize.DataTypes);
-const Appointment = require('./appointment')(sequelize, Sequelize.DataTypes);
-const Project = require('./project')(sequelize, Sequelize.DataTypes);
-const StockHistory = require('./stock_history')(sequelize);
-const ActivityLog = require('./activity_log')(sequelize, Sequelize.DataTypes);
-
-// Relación: Un proyecto tiene muchos items a través de ProjectItem
-Project.belongsToMany(Item, { through: ProjectItem, foreignKey: 'project_id', otherKey: 'item_id', as: 'items' });
-Item.belongsToMany(Project, { through: ProjectItem, foreignKey: 'item_id', otherKey: 'project_id', as: 'projects' });
-Project.hasMany(ProjectItem, { foreignKey: 'project_id', as: 'projectItems' });
-ProjectItem.belongsTo(Item, { foreignKey: 'item_id', as: 'item' });
-ProjectItem.belongsTo(Project, { foreignKey: 'project_id', as: 'project' });
-
-// Relación: Un item pertenece a un proveedor
-Item.belongsTo(Supplier, { foreignKey: 'supplier_id', as: 'supplier' });
-Item.hasOne(Stock, { foreignKey: 'item_id', as: 'stock' });
-Stock.belongsTo(Item, { foreignKey: 'item_id', as: 'item' });
-
-// Relación: Un proyecto puede tener muchos consumibles a través de ProjectConsumible
-Project.belongsToMany(Consumible, { through: ProjectConsumible, foreignKey: 'project_id', otherKey: 'consumible_id', as: 'consumibles' });
-Consumible.belongsToMany(Project, { through: ProjectConsumible, foreignKey: 'consumible_id', otherKey: 'project_id', as: 'projects' });
-Project.hasMany(ProjectConsumible, { foreignKey: 'project_id', as: 'projectConsumibles' });
-ProjectConsumible.belongsTo(Consumible, { foreignKey: 'consumible_id', as: 'consumible' });
-ProjectConsumible.belongsTo(Project, { foreignKey: 'project_id', as: 'project' });
-Transaction.belongsTo(Item, { foreignKey: 'item_id', as: 'item' });
-Transaction.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+const models = {
+	Item: require('./item')(sequelize, DataTypes),
+	Stock: require('./stock')(sequelize, DataTypes),
+	Supplier: require('./supplier')(sequelize, DataTypes),
+	ProjectItem: require('./project_item')(sequelize, DataTypes),
+	Consumible: require('./consumible')(sequelize, DataTypes),
+	ProjectConsumible: require('./project_consumible')(sequelize, DataTypes),
+	User: require('./user')(sequelize, DataTypes),
+	Transaction: require('./transaction')(sequelize, DataTypes),
+	Purchase: require('./purchase')(sequelize, DataTypes),
+	Role: require('./role')(sequelize, DataTypes),
+	UserRole: require('./user_role')(sequelize, DataTypes),
+	Finance: require('./finance')(sequelize, DataTypes),
+	FinanceHistory: require('./finance_history')(sequelize, DataTypes),
+	Service: require('./service')(sequelize, DataTypes),
+	Ticket: require('./ticket')(sequelize, DataTypes),
+	Appointment: require('./appointment')(sequelize, DataTypes),
+	Project: require('./project')(sequelize, DataTypes),
+	Report: require('./report')(sequelize, DataTypes),
+	StockHistory: require('./stock_history')(sequelize, DataTypes),
+	ActivityLog: require('./activity_log')(sequelize, DataTypes),
+};
 
 // Asociaciones
-User.associate({ Role, UserRole });
-Role.associate = models => {
-  Role.belongsToMany(models.User, {
-    through: models.UserRole,
-    as: 'users',
-    foreignKey: 'role_id',
-    otherKey: 'user_id'
-  });
-};
+Object.values(models).forEach(model => {
+	if (model.associate) model.associate(models);
+});
 
 module.exports = {
 	sequelize,
-	Item,
-	Stock,
-	Supplier,
-	Project,
-	ProjectItem,
-	Consumible,
-	ProjectConsumible,
-	User,
-	Transaction,
-	Purchase,
-	Role,
-	UserRole,
-	Finance,
-	FinanceHistory,
-	Service,
-	Ticket,
-	Appointment,
-	StockHistory,
-	ActivityLog,
+	...models,
 };

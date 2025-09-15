@@ -47,7 +47,7 @@
  */
 
 module.exports = (sequelize, DataTypes) => {
-  return sequelize.define('Project', {
+  const Project = sequelize.define('Project', {
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
     name: { type: DataTypes.STRING, allowNull: false },
     description: { type: DataTypes.TEXT, allowNull: true },
@@ -59,5 +59,13 @@ module.exports = (sequelize, DataTypes) => {
     tableName: 'projects',
     timestamps: false,
   });
+
+  Project.associate = models => {
+    Project.belongsToMany(models.Item, { through: models.ProjectItem, foreignKey: 'project_id', otherKey: 'item_id', as: 'items' });
+    Project.hasMany(models.ProjectItem, { foreignKey: 'project_id', as: 'projectItems' });
+    Project.belongsToMany(models.Consumible, { through: models.ProjectConsumible, foreignKey: 'project_id', otherKey: 'consumible_id', as: 'consumibles' });
+    Project.hasMany(models.ProjectConsumible, { foreignKey: 'project_id', as: 'projectConsumibles' });
+  };
+  return Project;
 };
 // ...existing code...

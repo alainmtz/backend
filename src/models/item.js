@@ -43,7 +43,7 @@
  */
 const { DataTypes } = require('sequelize');
 
-module.exports = (sequelize) => {
+module.exports = (sequelize, DataTypes) => {
   const Item = sequelize.define('Item', {
     id: {
       type: DataTypes.INTEGER,
@@ -127,5 +127,10 @@ module.exports = (sequelize) => {
     });
   };
 
+  Item.associate = models => {
+    Item.belongsTo(models.Supplier, { foreignKey: 'supplier_id', as: 'supplier' });
+    Item.hasOne(models.Stock, { foreignKey: 'item_id', as: 'stock' });
+    Item.belongsToMany(models.Project, { through: models.ProjectItem, foreignKey: 'item_id', otherKey: 'project_id', as: 'projects' });
+  };
   return Item;
 };

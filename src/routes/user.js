@@ -128,8 +128,7 @@ router.post('/', [
   body('email').isEmail(),
   body('password').isString().isLength({ min: 6 }),
   body('first_name').isString().notEmpty(),
-  body('last_name').isString().notEmpty(),
-  body('role').isString().isIn(['admin','staff','developer','vendedor'])
+  body('last_name').isString().notEmpty()
 ], userController.register);
 
 /**

@@ -9,21 +9,17 @@ module.exports = {
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    const { email, password, first_name, last_name, role } = req.body;
+    const { email, password, first_name, last_name } = req.body;
     try {
       const exists = await User.findOne({ where: { email } });
       if (exists) return res.status(400).json({ error: 'El usuario ya existe' });
       const password_hash = await bcrypt.hash(password, 10);
+      // Asignar rol 'User' (id 5) por defecto
+      const role = 'User';
       const user = await User.create({ email, password_hash, first_name, last_name, role });
-      // Asignar el rol en UserRoles
-      if (role) {
-        const RoleModel = require('../models').Role;
-        const UserRoleModel = require('../models').UserRole;
-        const roleInstance = await RoleModel.findOne({ where: { name: role } });
-        if (roleInstance) {
-          await UserRoleModel.create({ user_id: user.id, role_id: roleInstance.id });
-        }
-      }
+      // Asignar el rol en UserRoles con id 5
+      const UserRoleModel = require('../models').UserRole;
+      await UserRoleModel.create({ user_id: user.id, role_id: 5 });
       res.status(201).json({ id: user.id, email: user.email, first_name: user.first_name, last_name: user.last_name, role: user.role });
     } catch (err) {
       res.status(500).json({ error: 'Error al registrar usuario', details: err.message });
